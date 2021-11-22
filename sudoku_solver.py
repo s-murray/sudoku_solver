@@ -14,7 +14,7 @@ class Sudoku(object):
             empty_row.append('.')
         empty_sudoku = []
         for i in range(9):
-            empty_sudoku.append(empty_row)
+            empty_sudoku.append(empty_row.copy())
         self._puzzle = empty_sudoku
 
     @property
@@ -33,7 +33,7 @@ class Sudoku(object):
         """Returns row of Sudoku puzzle.
 
         Args:
-            row (int): Value between 1-9 for row in Sudoku, 1 is top of puzzle.
+            row (int): Value between 0-8 for row in Sudoku, 0 is top of puzzle.
 
         Returns:
             list: List representing row of Sudoku
@@ -45,8 +45,8 @@ class Sudoku(object):
         """Sets row of Sudoku.puzzle to new value
 
         Args:
-            row_num (int): Row number from 1-9 being changed.
-            new_row (list): String of 9 characters consisting of numbers and '.'
+            row_num (int): Row number from 0-8 being changed, 0 is the top of puzzle.
+            new_row (list): String of 9 characters consisting of numbers and '.' to set the row to.
 
         """
         self.puzzle[row_num] = new_row
@@ -55,7 +55,7 @@ class Sudoku(object):
         """Calculates a string representation of specific column.
 
         Args:
-            column (int): Value between 1-9 for column of Sudoku, 1 is left of puzzle.
+            column (int): Value between 0-8 for column of Sudoku, 0 is left of puzzle.
 
         Returns:
             list: List representing column of Sudoku.
@@ -67,17 +67,15 @@ class Sudoku(object):
         return sudoku_column
 
     def set_column(self, column_num: int, new_column: list):
-        """Sets column of Sudoku.puzzle to new value
+        """Sets column of Sudoku.puzzle to new value.
 
         Args:
-            column_num (int): Row number from 1-9 being changed.
-            new_column (list): String of 9 characters consisting of numbers and '.'
-
-        Returns:
+            column_num (int): Row number from 0-8 being changed, 0 is the left of puzzle.
+            new_column (list): String of 9 characters consisting of numbers and '.' to set the column to.
 
         """
         for i in range(9):
-
+            self.puzzle[i][column_num] = new_column[i]
 
     def get_segment(self, row: int, column: int):
         """Calculates a specific 3x3 segment of Sudoku.
@@ -88,8 +86,8 @@ class Sudoku(object):
                 789
 
         Args:
-            row (int): Value between 1-3 representing segment row of Sudoku puzzle, 1 is top of puzzle.
-            column (int): Value between 1-3 representing segment column of Sudoku puzzle, 1 is left of puzzle.
+            row (int): Value between 0-2 representing segment row of Sudoku puzzle, 0 is top of puzzle.
+            column (int): Value between 0-2 representing segment column of Sudoku puzzle, 0 is left of puzzle.
 
         Returns:
             str: String representing values in segment of Sudoku.
@@ -100,6 +98,33 @@ class Sudoku(object):
             for j in range(3 * column, 3 * column + 3):
                 sudoku_segment.append(self.get_row(i)[j])
         return sudoku_segment
+
+    def set_segment(self, row: int, column: int, new_segment: list):
+        """Sets segment of Sudoku.puzzle to new value.
+
+        Args:
+            row (int): Value between 0-2 representing segment row of Sudoku puzzle, 0 is top of puzzle.
+            column (int): Value between 0-2 representing segment column of Sudoku puzzle, 0 is left of puzzle.
+            new_segment: String of 9 characters consisting of numbers and '.' to set the segment to.
+
+        """
+        k = 0
+        for i in range(3 * row, 3 * row + 3):
+            for j in range(3 * column, 3 * column + 3):
+                self.puzzle[i][j] = new_segment[k]
+                k += 1
+
+    def validate_input(self, input_item: "list, str"):
+        """
+
+        Args:
+            input_item (list, str): List or string to be validated by function.
+
+        Returns:
+            bool: True if validated, False if invalid string or list.
+
+        """
+
 
     def __str__(self):
         s = ''
@@ -114,7 +139,7 @@ class Sudoku(object):
 
 test_puzzle = Sudoku()
 print(test_puzzle)
-test_row = list('.1.......')
-test_puzzle.set_row(1, test_row)
+test_row = list('........1')
+test_puzzle.set_segment(0, 0, test_row)
 print()
 print(test_puzzle)
