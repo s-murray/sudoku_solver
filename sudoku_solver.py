@@ -1,10 +1,13 @@
+import itertools
+
+
 class Sudoku(object):
     """Represents a 9x9 sized Sudoku puzzle.
 
     Initializing creates an empty Sudoku; empty spaces in Sudoku puzzle are represented by '.' character.
 
     Attributes:
-        _puzzle (list): list of length 9 of length 9 strings representing Sudoku.
+        puzzle (list): list of length 9 of length 9 strings representing Sudoku.
 
     """
 
@@ -15,19 +18,7 @@ class Sudoku(object):
         empty_sudoku = []
         for i in range(9):
             empty_sudoku.append(empty_row.copy())
-        self._puzzle = empty_sudoku
-
-    @property
-    def puzzle(self):
-        return self._puzzle
-
-    @puzzle.setter
-    def puzzle(self, new_puzzle):
-        self._puzzle = new_puzzle
-
-    @puzzle.deleter
-    def puzzle(self):
-        del self._puzzle
+        self.puzzle = empty_sudoku
 
     def get_row(self, row: int):
         """Returns row of Sudoku puzzle.
@@ -46,7 +37,7 @@ class Sudoku(object):
 
         Args:
             row_num (int): Row number from 0-8 being changed, 0 is the top of puzzle.
-            new_row (list): String of 9 characters consisting of numbers and '.' to set the row to.
+            new_row (list): List of 9 characters consisting of numbers and '.' to set the row to.
 
         """
         self.puzzle[row_num] = new_row
@@ -71,7 +62,7 @@ class Sudoku(object):
 
         Args:
             column_num (int): Row number from 0-8 being changed, 0 is the left of puzzle.
-            new_column (list): String of 9 characters consisting of numbers and '.' to set the column to.
+            new_column (list): List of 9 characters consisting of numbers and '.' to set the column to.
 
         """
         for i in range(9):
@@ -105,7 +96,7 @@ class Sudoku(object):
         Args:
             row (int): Value between 0-2 representing segment row of Sudoku puzzle, 0 is top of puzzle.
             column (int): Value between 0-2 representing segment column of Sudoku puzzle, 0 is left of puzzle.
-            new_segment: String of 9 characters consisting of numbers and '.' to set the segment to.
+            new_segment: List of 9 characters consisting of numbers and '.' to set the segment to.
 
         """
         k = 0
@@ -113,18 +104,6 @@ class Sudoku(object):
             for j in range(3 * column, 3 * column + 3):
                 self.puzzle[i][j] = new_segment[k]
                 k += 1
-
-    def validate_input(self, input_item: "list, str"):
-        """
-
-        Args:
-            input_item (list, str): List or string to be validated by function.
-
-        Returns:
-            bool: True if validated, False if invalid string or list.
-
-        """
-
 
     def __str__(self):
         s = ''
@@ -137,9 +116,56 @@ class Sudoku(object):
         return s
 
 
+class SudokuList(object):
+    """Represents a row, column or segment of Sudoku as list of characters.
+
+    __init__ checks if input string is a valid SudokuList.
+
+    Args:
+        input_string (str): string of either '.' representing blank spaces or unique digits 1-9.
+
+    Attributes:
+        values (list): represents Sudoku list (row, column, segment).
+    """
+
+    def __init__(self, input_string: str):
+        if type(input_string) != str:
+            raise TypeError('input_string must be of type str')
+        if len(input_string) != 9:
+            raise ValueError('SudokuList must be 9 elements long')
+        test_dict = {}
+        for item in input_string:
+            if item.isdigit():
+                if item == '0':
+                    raise ValueError('All elements must be digits between 1-9 or "."')
+                else:
+                    test_dict[item] = test_dict.get(item, 0) + 1
+                    if test_dict[item] > 1:
+                        raise ValueError('All elements must be unique')
+            elif not item == '.':
+                raise ValueError('All elements must be digits between 1-9 or "."')
+        else:
+            self.values = list(input_string)
+
+    def valid_permutations(self):
+        """Determines all valid permutations of full legal SudokuLists using self as seed.
+
+        Function will return a list of SudokuList elements that are all the valid permutations of existing SudokuList
+        object. All returned elements will be the original SudokuList with blank elements filled in in all permutations.
+
+        Returns:
+            list: list of SudokuList elements
+
+        """
+
+    def __str__(self):
+        print_str = "<"
+        for item in self.values:
+            print_str += item
+        print_str += ">"
+        return print_str
+
+
 test_puzzle = Sudoku()
-print(test_puzzle)
-test_row = list('........1')
-test_puzzle.set_segment(0, 0, test_row)
-print()
-print(test_puzzle)
+test_list = SudokuList('123.5.789')
+print(test_list)
