@@ -1,4 +1,5 @@
-import itertools
+import itertools, copy
+from typing import Generator, Union
 
 
 class Sudoku(object):
@@ -12,12 +13,10 @@ class Sudoku(object):
     """
 
     def __init__(self):
-        empty_row = []
-        for i in range(9):
-            empty_row.append('.')
+        empty_row = SudokuList('.........')
         empty_sudoku = []
         for i in range(9):
-            empty_sudoku.append(empty_row.copy())
+            empty_sudoku.append(copy.deepcopy(empty_row))
         self.puzzle = empty_sudoku
 
     def get_row(self, row: int):
@@ -32,17 +31,17 @@ class Sudoku(object):
         """
         return self.puzzle[row]
 
-    def set_row(self, row_num: int, new_row: list):
+    def set_row(self, row_num: int, new_row: "SudokuList"):
         """Sets row of Sudoku.puzzle to new value
 
         Args:
             row_num (int): Row number from 0-8 being changed, 0 is the top of puzzle.
-            new_row (list): List of 9 characters consisting of numbers and '.' to set the row to.
+            new_row (SudokuList): List of 9 characters consisting of numbers and '.' to set the row to.
 
         """
-        self.puzzle[row_num] = new_row
+        self.puzzle[row_num] = copy.deepcopy(new_row)
 
-    def get_column(self, column: int):
+    def get_column(self, column: int) -> "SudokuList":
         """Calculates a string representation of specific column.
 
         Args:
@@ -55,20 +54,21 @@ class Sudoku(object):
         sudoku_column = []
         for i in range(9):
             sudoku_column.append(self.get_row(i)[column])
-        return sudoku_column
+        return SudokuList(sudoku_column)
 
-    def set_column(self, column_num: int, new_column: list):
+    def set_column(self, column_num: int, new_column: "SudokuList"):
         """Sets column of Sudoku.puzzle to new value.
 
         Args:
             column_num (int): Row number from 0-8 being changed, 0 is the left of puzzle.
-            new_column (list): List of 9 characters consisting of numbers and '.' to set the column to.
+            new_column (SudokuList): List of 9 characters consisting of numbers and '.' to set the column to.
 
         """
+        copied_column = copy.deepcopy(new_column)
         for i in range(9):
-            self.puzzle[i][column_num] = new_column[i]
+            self.puzzle[i][column_num] = copied_column[i]
 
-    def get_segment(self, row: int, column: int):
+    def get_segment(self, row: int, column: int) -> "SudokuList":
         """Calculates a specific 3x3 segment of Sudoku.
 
         The returned string is a concatenation of the three rows of the returned segment, e.g.:
@@ -88,22 +88,61 @@ class Sudoku(object):
         for i in range(3 * row, 3 * row + 3):
             for j in range(3 * column, 3 * column + 3):
                 sudoku_segment.append(self.get_row(i)[j])
-        return sudoku_segment
+        return SudokuList(sudoku_segment)
 
-    def set_segment(self, row: int, column: int, new_segment: list):
+    def set_segment(self, row: int, column: int, new_segment: "SudokuList"):
         """Sets segment of Sudoku.puzzle to new value.
 
         Args:
             row (int): Value between 0-2 representing segment row of Sudoku puzzle, 0 is top of puzzle.
             column (int): Value between 0-2 representing segment column of Sudoku puzzle, 0 is left of puzzle.
-            new_segment: List of 9 characters consisting of numbers and '.' to set the segment to.
+            new_segment (SudokuList): List of 9 characters consisting of numbers and '.' to set the segment to.
 
         """
+        copied_segment = copy.deepcopy(new_segment)
         k = 0
         for i in range(3 * row, 3 * row + 3):
             for j in range(3 * column, 3 * column + 3):
-                self.puzzle[i][j] = new_segment[k]
+                self.puzzle[i][j] = copied_segment[k]
                 k += 1
+
+    def check_legality(self):
+        """Checks to ensure all columns and segments are legal SudokuLists
+        
+        NOTE: Assumes all rows were set using set_row and would therefore already be know to be legal.
+
+        Returns:
+            bool: True if Sudoku is currently legal, False if it is not.
+
+        """
+        for column in range(9):
+            if not self.get_column(column).validate_list():
+                return False
+        for i in range(3):
+            for j in range(3):
+                if not self.get_segment(i, j).validate_list():
+                    return False
+        return True
+
+    def input(self):
+        """Asks user for an input of all rows of Sudoku and checks for legality.
+
+        Returns:
+            None
+
+        """
+
+
+    def solve(self):
+        """Solves the Sudoku puzzle of the associated object.
+
+        If Sudoku puzzle has multiple solutions, first found correct solution will be returned rather than all
+        solutions. If no solution can be found due to improper starting conditions, ValueError is raised.
+
+        Returns:
+            Sudoku: Solved version of self.puzzle
+
+        """
 
     def __str__(self):
         s = ''
@@ -122,41 +161,68 @@ class SudokuList(object):
     __init__ checks if input string is a valid SudokuList.
 
     Args:
-        input_string (str): string of either '.' representing blank spaces or unique digits 1-9.
+        input_string (str, list): string or list of either '.' representing blank spaces or unique character digits 1-9.
 
     Attributes:
         values (list): represents Sudoku list (row, column, segment).
     """
 
-    def __init__(self, input_string: str):
-        if type(input_string) != str:
-            raise TypeError('input_string must be of type str')
-        if len(input_string) != 9:
-            raise ValueError('SudokuList must be 9 elements long')
+    def __init__(self, input_string: Union[str, list]):
+            self.values = list(input_string)
+
+    def validate_list(self) -> bool:
+        """Ensures SudokuList is legal.
+
+        Checks to ensure all items are unique digits 1-9 or any number of '.'
+
+        Returns:
+            bool: True if input is a valid Sudoku list, False if not.
+
+        """
+        if type(self.values) != str and type(self.values) != list:
+            return False
+        if len(self.values) != 9:
+            return False
         test_dict = {}
-        for item in input_string:
+        for item in self.values:
             if item.isdigit():
                 if item == '0':
-                    raise ValueError('All elements must be digits between 1-9 or "."')
+                    return False
+                elif len(item) > 1:
+                    return False
                 else:
                     test_dict[item] = test_dict.get(item, 0) + 1
                     if test_dict[item] > 1:
-                        raise ValueError('All elements must be unique')
+                        return False
             elif not item == '.':
-                raise ValueError('All elements must be digits between 1-9 or "."')
+                return False
         else:
-            self.values = list(input_string)
+            return True
 
-    def valid_permutations(self):
+    def valid_permutations(self) -> Generator["SudokuList", None, None]:
         """Determines all valid permutations of full legal SudokuLists using self as seed.
 
         Function will return a list of SudokuList elements that are all the valid permutations of existing SudokuList
         object. All returned elements will be the original SudokuList with blank elements filled in in all permutations.
 
-        Returns:
-            list: list of SudokuList elements
+        Yields:
+            list: permutation of valid SudokuList
 
         """
+        permute_base = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+        for item in self.values:
+            if not item == '.':
+                permute_base.remove(item)
+        for permutation_partial in itertools.permutations(permute_base):
+            i = 0
+            permutation = []
+            for value in self.values:
+                if value == '.':
+                    permutation.append(permutation_partial[i])
+                    i += 1
+                else:
+                    permutation.append(value)
+            yield SudokuList(permutation)
 
     def __str__(self):
         print_str = "<"
@@ -165,7 +231,19 @@ class SudokuList(object):
         print_str += ">"
         return print_str
 
+    def __getitem__(self, item):
+        return self.values[item]
+
+    def __setitem__(self, key, value):
+        self.values[key] = value
+
 
 test_puzzle = Sudoku()
-test_list = SudokuList('123.5.789')
-print(test_list)
+test_list = SudokuList('1.3.5.7.9')
+test_list2 = SudokuList('23..5.7.9')
+
+test_puzzle.set_row(1, test_list)
+test_puzzle.set_column(2, test_list2)
+print(test_puzzle)
+print(test_puzzle.check_legality())
+
