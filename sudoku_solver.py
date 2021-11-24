@@ -1,4 +1,5 @@
-import itertools, copy
+import itertools
+import copy
 from typing import Generator, Union
 
 
@@ -106,7 +107,7 @@ class Sudoku(object):
                 self.puzzle[i][j] = copied_segment[k]
                 k += 1
 
-    def check_legality(self):
+    def check_legality(self) -> bool:
         """Checks to ensure all columns and segments are legal SudokuLists
         
         NOTE: Assumes all rows were set using set_row and would therefore already be know to be legal.
@@ -131,7 +132,26 @@ class Sudoku(object):
             None
 
         """
-
+        print("Please enter rows of Sudoku; use '.' for blank spaces:")
+        legal_sudoku = False
+        while not legal_sudoku:
+            for row in range(9):
+                valid_row = False
+                while not valid_row:
+                    new_row = SudokuList(input("Row {}: ".format(row+1)))
+                    valid_row = new_row.validate_list()
+                    if valid_row:
+                        self.set_row(row, new_row)
+                    else:
+                        print("Row must must be 9 items long contain only unique integers from 1-9 or '.' for blank "
+                              "spaces.")
+                    if not self.check_legality():
+                        print("Sudoku entered is not legal, please start from beginning ensuring all rows column and "
+                              "segments contain only unique digits.")
+                        break
+                else:
+                    continue
+                break
 
     def solve(self):
         """Solves the Sudoku puzzle of the associated object.
@@ -168,7 +188,7 @@ class SudokuList(object):
     """
 
     def __init__(self, input_string: Union[str, list]):
-            self.values = list(input_string)
+        self.values = list(input_string)
 
     def validate_list(self) -> bool:
         """Ensures SudokuList is legal.
@@ -239,11 +259,4 @@ class SudokuList(object):
 
 
 test_puzzle = Sudoku()
-test_list = SudokuList('1.3.5.7.9')
-test_list2 = SudokuList('23..5.7.9')
-
-test_puzzle.set_row(1, test_list)
-test_puzzle.set_column(2, test_list2)
-print(test_puzzle)
-print(test_puzzle.check_legality())
-
+test_puzzle.input()
