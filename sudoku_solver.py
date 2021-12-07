@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import itertools
 import copy
-from typing import Generator, Union
+from typing import Union
 
 
 class Sudoku(object):
@@ -20,7 +22,7 @@ class Sudoku(object):
             empty_sudoku.append(copy.deepcopy(empty_row))
         self.puzzle = empty_sudoku
 
-    def get_row(self, row: int):
+    def get_row(self, row: int) -> SudokuList:
         """Returns row of Sudoku puzzle.
 
         Args:
@@ -32,7 +34,7 @@ class Sudoku(object):
         """
         return self.puzzle[row]
 
-    def set_row(self, row_num: int, new_row: "SudokuList"):
+    def set_row(self, row_num: int, new_row: SudokuList):
         """Sets row of Sudoku.puzzle to new value
 
         Args:
@@ -42,7 +44,7 @@ class Sudoku(object):
         """
         self.puzzle[row_num] = copy.deepcopy(new_row)
 
-    def get_column(self, column: int) -> "SudokuList":
+    def get_column(self, column: int) -> SudokuList:
         """Calculates a string representation of specific column.
 
         Args:
@@ -57,7 +59,7 @@ class Sudoku(object):
             sudoku_column.append(self.get_row(i)[column])
         return SudokuList(sudoku_column)
 
-    def set_column(self, column_num: int, new_column: "SudokuList"):
+    def set_column(self, column_num: int, new_column: SudokuList):
         """Sets column of Sudoku.puzzle to new value.
 
         Args:
@@ -69,7 +71,7 @@ class Sudoku(object):
         for i in range(9):
             self.puzzle[i][column_num] = copied_column[i]
 
-    def get_segment(self, row: int, column: int) -> "SudokuList":
+    def get_segment(self, row: int, column: int) -> SudokuList:
         """Calculates a specific 3x3 segment of Sudoku.
 
         The returned string is a concatenation of the three rows of the returned segment, e.g.:
@@ -91,7 +93,7 @@ class Sudoku(object):
                 sudoku_segment.append(self.get_row(i)[j])
         return SudokuList(sudoku_segment)
 
-    def set_segment(self, row: int, column: int, new_segment: "SudokuList"):
+    def set_segment(self, row: int, column: int, new_segment: SudokuList):
         """Sets segment of Sudoku.puzzle to new value.
 
         Args:
@@ -152,15 +154,51 @@ class Sudoku(object):
                 else:
                     continue
                 break
+            else:
+                legal_sudoku = True
 
-    def solve(self):
-        """Solves the Sudoku puzzle of the associated object.
+    def brute_solve(self):
+        """Brute force solves the Sudoku puzzle of the associated object.
 
-        If Sudoku puzzle has multiple solutions, first found correct solution will be returned rather than all
-        solutions. If no solution can be found due to improper starting conditions, ValueError is raised.
+        If Sudoku puzzle has multiple solutions, first found correct solution will be set to self.puzzle, if no
+        solution can be found the puzzle is reset and a console message is displayed.
 
         Returns:
-            Sudoku: Solved version of self.puzzle
+            None
+
+        """
+        def brute_solve_helper(puzzle: Sudoku, row_num: int) -> bool:
+            temp_row = copy.deepcopy(puzzle.get_row(row_num))
+            all_permutations = puzzle.get_row(row_num).valid_permutations()
+            for perm in all_permutations:
+                puzzle.set_row(row_num, perm)
+                if puzzle.check_legality():
+                    if row_num == 8:
+                        return True
+                    else:
+                        puzzle_is_solved = brute_solve_helper(puzzle, row_num + 1)
+                        if puzzle_is_solved:
+                            return True
+                if perm == all_permutations[-1]:
+                    puzzle.set_row(row_num, temp_row)
+                    return False
+
+        test_puzzle = copy.deepcopy(self)
+        is_solved = brute_solve_helper(test_puzzle, 0)
+        if is_solved:
+            for row in range(9):
+                self.set_row(row, test_puzzle.get_row(row))
+        else:
+            print("Puzzle provided is not solvable")
+
+    def smart_solve(self):
+        """Solves Sudoku by applying logic before resorting to brute force to finish if necessary.
+
+        This method attempts to improve the runtime of self.brute_solve(); since brute solve is O(n!^9) where n is the
+        unsolved square in a line of Sudoku, small reductions in n can have a dramatic impact on runtime.
+
+        Returns:
+            None
 
         """
 
@@ -219,7 +257,7 @@ class SudokuList(object):
         else:
             return True
 
-    def valid_permutations(self) -> Generator["SudokuList", None, None]:
+    def valid_permutations(self) -> list[SudokuList]:
         """Determines all valid permutations of full legal SudokuLists using self as seed.
 
         Function will return a list of SudokuList elements that are all the valid permutations of existing SudokuList
@@ -230,6 +268,7 @@ class SudokuList(object):
 
         """
         permute_base = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+        permutations = []
         for item in self.values:
             if not item == '.':
                 permute_base.remove(item)
@@ -242,7 +281,8 @@ class SudokuList(object):
                     i += 1
                 else:
                     permutation.append(value)
-            yield SudokuList(permutation)
+            permutations.append(SudokuList(permutation))
+        return permutations
 
     def __str__(self):
         print_str = "<"
@@ -257,6 +297,23 @@ class SudokuList(object):
     def __setitem__(self, key, value):
         self.values[key] = value
 
+    def __repr__(self):
+        return f"SudokuList({''.join(self.values)})"
 
-test_puzzle = Sudoku()
-test_puzzle.input()
+
+class SudokuHint(object):
+
+
+
+test2_puzzle = Sudoku()
+test2_puzzle.set_row(0, SudokuList('.2.......'))
+test2_puzzle.set_row(1, SudokuList('...6....3'))
+test2_puzzle.set_row(2, SudokuList('.74.8....'))
+test2_puzzle.set_row(3, SudokuList('.....3..2'))
+test2_puzzle.set_row(4, SudokuList('.8..4....'))
+test2_puzzle.set_row(5, SudokuList('6..5.....'))
+test2_puzzle.set_row(6, SudokuList('....1.78.'))
+test2_puzzle.set_row(7, SudokuList('5....9...'))
+test2_puzzle.set_row(8, SudokuList('.......4.'))
+test2_puzzle.brute_solve()
+print(test2_puzzle)
